@@ -1,11 +1,14 @@
 package hipravin.samples.timezones;
 
+import org.h2.util.DateTimeUtils;
 import org.springframework.dao.DataRetrievalFailureException;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import javax.transaction.Transactional;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -42,9 +45,14 @@ public class MeetingDaoJdbcTemplateDaoImpl implements MeetingDao {
 
     @Override
     public void add(MeetingDto meetingDto) {
+        //imitating mess timezone mess
+        //this shouldn't lead to timezone issues
+        TimeZone.setDefault(TimeZone.getTimeZone("GMT"));
+        DateTimeUtils.resetCalendar();
+
         Long nextId = namedParameterJdbcTemplate.queryForObject(MTG_ID_NEXTVAL_QUERY, Collections.emptyMap(), Long.class);
 
-        if(nextId == null) {
+        if (nextId == null) {
             throw new DataRetrievalFailureException("Can't fetch next id, got null: " + MTG_ID_NEXTVAL_QUERY);
         }
 
@@ -56,6 +64,29 @@ public class MeetingDaoJdbcTemplateDaoImpl implements MeetingDao {
             ps.setTimestamp(3, new Timestamp(meetingDto.getMeetingTimeDate().getTime()), CALENDAR);
             ps.setTimestamp(4, Timestamp.from(meetingDto.getMeetingTimeOffsetDateTime().toInstant()), CALENDAR);
         });
+    }
+
+    public void addIncorrect(MeetingDto meetingDto) {
+        TimeZone.setDefault(TimeZone.getTimeZone("GMT"));
+        DateTimeUtils.resetCalendar();
+
+        Long nextId = namedParameterJdbcTemplate.queryForObject(MTG_ID_NEXTVAL_QUERY, Collections.emptyMap(), Long.class);
+
+        if (nextId == null) {
+            throw new DataRetrievalFailureException("Can't fetch next id, got null: " + MTG_ID_NEXTVAL_QUERY);
+        }
+
+        meetingDto.setId(nextId);
+
+        String insertQuery = "INSERT INTO MEETINGS (ID, DESCRIPTION, DATE_DATE, DATE_OFFSETDT) " +
+                " VALUES (:id, :description, :date, :date_odt)";
+
+        namedParameterJdbcTemplate.update(insertQuery, new MapSqlParameterSource()
+                .addValue("id", meetingDto.getId())
+                .addValue("description", meetingDto.getDescription())
+                .addValue("date", meetingDto.getMeetingTimeDate(), Types.TIMESTAMP)
+                .addValue("date_odt", meetingDto.getMeetingTimeOffsetDateTime(), Types.TIMESTAMP)
+        );
     }
 
     @Override
@@ -74,7 +105,7 @@ public class MeetingDaoJdbcTemplateDaoImpl implements MeetingDao {
     @Override
     public void delete(Long id) throws NotFoundException {
         int deleted = namedParameterJdbcTemplate.update(DELETE_BY_ID_QUERY, Collections.singletonMap("id", id));
-        if(deleted == 0) {
+        if (deleted == 0) {
             throw new NotFoundException("Meeting with id " + id + " not found.");
         }
     }
