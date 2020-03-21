@@ -23,7 +23,6 @@ public class MeetingEntity {
     private Date meetingTimeDate;
 
     @Column(name = "DATE_OFFSETDT")
-//    @Type(type = "hipravin.samples.timezones.NewYorkTimestampType")
     private OffsetDateTime meetingTimeOdt;
 
     public static MeetingEntity fromDto(MeetingDto dto) {
