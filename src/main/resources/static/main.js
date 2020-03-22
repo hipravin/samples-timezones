@@ -93,7 +93,7 @@ function fillMeetingTable(meetings) {
             .append($('<td>').text(m.description))
             .append($('<td>').text(formatLocal(Date.parse(m.meetingTimeDate))))
             .append($('<td>').text(formatLocal(Date.parse(m.meetingTimeOffsetDateTime))))
-            .append($('<td>').text(formatNy(Date.parse(m.meetingTimeOffsetDateTime))))
+            .append($('<td>').text(formatNy(Date.parse(m.meetingTimeDate))))
             .append($('<td>').text(formatNy(Date.parse(m.meetingTimeOffsetDateTime))))
             .append($('<td>').append(removeBtn));
 
